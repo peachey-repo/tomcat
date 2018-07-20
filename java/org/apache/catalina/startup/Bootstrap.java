@@ -62,6 +62,9 @@ public final class Bootstrap {
 
     private static final Pattern PATH_PATTERN = Pattern.compile("(\".*?\")|(([^,])*)");
 
+    //静态方法主要功能是完成加载catalina的home和base目录，并set到System的property中
+    //1、为何System是否为全局？如何解释重复设置home/base（同一个Key）,启动一次设置一次
+    //2、java file相关的使用及原理？
     static {
         // Will always be non-null
         // user.dir是jdk定义的key,表示当前用户所在的目录，
@@ -107,8 +110,7 @@ public final class Bootstrap {
         }
 
         catalinaHomeFile = homeFile;
-        System.setProperty(
-                Globals.CATALINA_HOME_PROP, catalinaHomeFile.getPath());
+        System.setProperty(Globals.CATALINA_HOME_PROP, catalinaHomeFile.getPath());
 
         // Then base
         String base = System.getProperty(Globals.CATALINA_BASE_PROP);
@@ -123,8 +125,7 @@ public final class Bootstrap {
             }
             catalinaBaseFile = baseFile;
         }
-        System.setProperty(
-                Globals.CATALINA_BASE_PROP, catalinaBaseFile.getPath());
+        System.setProperty(Globals.CATALINA_BASE_PROP, catalinaBaseFile.getPath());
     }
 
     // -------------------------------------------------------------- Variables
@@ -455,6 +456,11 @@ public final class Bootstrap {
      */
     public static void main(String args[]) {
 
+        //main函数维持一个进程，会接受到start/stop命令，加锁是防止多次创建daemon
+        //此处相当于一个单例模式，没有第一重判断会导致synchronized每次都没被执行到，影响性能
+        //要注意daemon是volatile的，这个字段是利用其禁止指令重排序优化特性而非线程可见性
+        //Bootstrap bootstrap = new Bootstrap();分配内存->new->bootstrap指向内存空间
+        //在jdk 1.5之前禁止指令重排序优化(上边3个步骤会乱序执行)还是有问题的，在1.5以后才得到解决
         synchronized (daemonLock) {
             if (daemon == null) {
                 // Don't set daemon until init() has completed
