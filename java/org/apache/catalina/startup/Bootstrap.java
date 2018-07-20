@@ -64,6 +64,8 @@ public final class Bootstrap {
 
     static {
         // Will always be non-null
+        // user.dir是jdk定义的key,表示当前用户所在的目录，
+        // 也就是说在哪个目录启动，user.dir就是哪个目录
         String userDir = System.getProperty("user.dir");
 
         // Home first
